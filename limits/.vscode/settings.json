@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "limits.h": "c",
+        "float.h": "c",
+        "stdio.h": "c"
+    }
+}
