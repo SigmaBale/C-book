@@ -8,9 +8,11 @@
 
 void push(double n);
 double pop();
+void dumpstack(int amount);
 
 int main(int argc, char *argv[]) {
     int type, c;
+    char *str;
     double op1, op2;
 
     while (--argc > 0) {
@@ -27,9 +29,10 @@ int main(int argc, char *argv[]) {
                 push(pop() + pop());
                 break;
             case '-':
-                push(pop() - pop());
+                op2 = pop();
+                push(pop() - op2);
                 break;
-            case '*':
+            case 'x':
                 push(pop() * pop());
                 break;
             case '/':
@@ -42,7 +45,7 @@ int main(int argc, char *argv[]) {
             case '%':
                 op2 = pop();
                 if (op2 == 0)
-                    printf("error: undefined behaviour modulo with 0");
+                    printf("error: undefined behaviour modulo with 0\n");
                 else
                     push(fmod(pop(), op2));
                 break;
@@ -55,7 +58,7 @@ int main(int argc, char *argv[]) {
                     push(pow(op1, op2));
                 break;
             default:
-                printf("Unkown command: %c\n", type);
+                printf("Unkown command: %c\n", (char)type);
                 break;
         }
     }
