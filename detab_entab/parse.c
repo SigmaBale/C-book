@@ -1,4 +1,5 @@
 #include "expand.h"
+#include <stdio.h>
 #define UNINITIALIZED -1
 /*
     -t, --tabs=LIST
@@ -34,7 +35,7 @@ static int parse_tablist(int *tablist, char *arg, int size, int *specifier) {
             case '8':
             case '9':
                 if (last) {
-                    eprintf(DETAB_ERROR_SPECIFIER_NOT_LAST_VALUE, *specifier);
+                    fprintf(stderr, DETAB_ERROR_SPECIFIER_NOT_LAST_VALUE, *specifier);
                     return 0;
                 }
                 if (num == UNINITIALIZED)
@@ -48,7 +49,7 @@ static int parse_tablist(int *tablist, char *arg, int size, int *specifier) {
                         *(tablist++) = num;
                         len++;
                     } else {
-                        eprintf(DETAB_ERROR_TAB_SIZE_NOT_ASCENDING);
+                        fprintf(stderr, DETAB_ERROR_TAB_SIZE_NOT_ASCENDING);
                         return 0;
                     }
                 }
@@ -59,26 +60,26 @@ static int parse_tablist(int *tablist, char *arg, int size, int *specifier) {
             case '/':
             case '+':
                 if (*specifier != c && last) {
-                    eprintf(DETAB_ERROR_SPECIFIER_MUTUALLY_EXCLUSIVE);
+                    fprintf(stderr, DETAB_ERROR_SPECIFIER_MUTUALLY_EXCLUSIVE);
                     return 0;
                 }
                 if (*specifier || last) {
-                    eprintf(DETAB_ERROR_SPECIFIER_NOT_LAST_VALUE, *specifier);
+                    fprintf(stderr, DETAB_ERROR_SPECIFIER_NOT_LAST_VALUE, *specifier);
                     return 0;
                 }
                 if (num != UNINITIALIZED) {
-                    eprintf(DETAB_ERROR_SPECIFIER_NOT_AT_START_OF_NUM, c, *arg);
+                    fprintf(stderr, DETAB_ERROR_SPECIFIER_NOT_AT_START_OF_NUM, c, arg);
                     return 0;
                 }
                 *specifier = spec = c;
                 break;
             default:
-                eprintf(DETAB_ERROR_TAB_SIZE_INVALID_CHAR, *arg);
+                fprintf(stderr, DETAB_ERROR_TAB_SIZE_INVALID_CHAR, arg);
                 return 0;
         }
     }
     if (len == 0) {
-        eprintf(DETAB_ERROR_OPTION_REQUIRES_ARGUMENT);
+        fprintf(stderr, DETAB_ERROR_OPTION_REQUIRES_ARGUMENT);
         return 0;
     }
     return len;
@@ -92,16 +93,16 @@ int parse_args(int argc, char *argv[], int *tablist, int *len, int *specifier, i
         while ((c = *++argv[0]) != '\0') {
             switch (c) {
                 case 't':
-                    *len += parse_tablist(tablist + *len, &**argv, TABLIST_SIZE, &specifier);
+                    *len += parse_tablist(tablist + *len, &**argv, TABLIST_SIZE, specifier);
                     if (len == 0)
                         return 1;
                     break;
                 case 'i':
-                    preceeding = 1;
+                    *preceeding = 1;
                     break;
                 default:
-                    printf(DETAB_ERROR_UNKNOWN_OPTION, c);
-                    printf(USAGE);
+                    fprintf(stderr, DETAB_ERROR_UNKNOWN_OPTION, c);
+                    fprintf(stderr, USAGE);
                     return -1;
             }
         }
