@@ -78,7 +78,7 @@ static int parse_tablist(int *tablist, char *arg, int size, int *specifier) {
                 return 0;
         }
     }
-    if (len == 0) {
+    if (len == 0 && !spec) {
         fprintf(stderr, DETAB_ERROR_OPTION_REQUIRES_ARGUMENT);
         return 0;
     }
