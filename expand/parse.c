@@ -14,10 +14,7 @@ static int parse_tablist(int *tablist, char *arg, int size, specifier *s) {
 
     num = prev = UNINITIALIZED;
     spec = last = len = 0;
-    /* Skip preceeding whitespaces */
-    while (*arg == ' ')
-        arg++;
-    while (--size > 0 && (c = *++arg) != '\0') {
+    while (--size > 0 && (c = *arg++) != '\0') {
         switch (c) {
             case '0':
             case '1':
@@ -87,12 +84,19 @@ static int parse_tablist(int *tablist, char *arg, int size, specifier *s) {
 
 int parse_args(int argc, char *argv[], int *tablist, specifier *s, int *preceeding) {
     int c, len;
+    char *arg;
 next_parameter:
-    while (--argc > 0 && *(++argv)[0] == '-') {
+    while (--argc && *(++argv)[0] == '-') {
         while ((c = *++argv[0]) != '\0') {
             switch (c) {
                 case 't':
-                    len += parse_tablist(tablist + len, &**argv, TABLIST_SIZE, s);
+                    if (*(*argv+1) == '\0' && argc > 1) {
+                        arg = *(++argv);
+                        argc--;
+                    }
+                    else
+                        arg = (&**argv)+1;
+                    len += parse_tablist(tablist + len, arg, TABLIST_SIZE, s);
                     if (len == -1)
                         return len;
                     /* Can use goto because while loop is not reseting any state */
