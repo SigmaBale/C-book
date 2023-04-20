@@ -1,5 +1,13 @@
-#define MAXSIZE 2000
+#define MAXLINE 1000
 
-int readlines(char *array[], int lines, char *ap);
-void quicksort(char *a[], int start, int end);
+typedef struct {
+    int (*cmp)(void *, void *);
+    int reverse;
+    int fold;
+    int field;
+    char delim[MAXLINE];
+} flags;
+
+int readlines(char *array[], int lines);
 void printarray(char *a[], int len);
+void quicksort(void *a[], int start, int end, flags *options);

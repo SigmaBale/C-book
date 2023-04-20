@@ -1,60 +1,35 @@
 #include <stdio.h>
+#include <string.h>
 #include "parray.h"
-#define MAXLINE 1000
+char * alloc(unsigned int size);
 
-static void strcopy(char *src, char *dst)
-{
-    while (*src++ = *dst++)
-        ;
-}
-
-static size_t strlength(char *str)
-{
-    register const char *s;
-    for (s = str; *s != '\0'; ++s)
-        ;
-    return (s - str);
-}
-
-/* Reads the line from input and returns the line len in bytes */
-int getline(char *p)
-{
-    char *end = p + MAXLINE;
+static size_t gline(char *p, int size) {
     int c;
+    char *start = p;
 
-    while (p < end - 1 && (c = getchar()) != EOF && c != '\n')
-    {
+    while(--size > 0 && (c = getchar()) != EOF && c != '\n')
         *p++ = c;
-    }
-
     if (c == '\n')
-        *p++ = '\n';
-
+        *p++ = c;
     *p = '\0';
-
-    return (int)(p - (end - MAXLINE));
+    return (size_t) (p - start);
 }
 
-int readlines(char *array[], int lines, char *ap)
-{
+int readlines(char *array[], int maxlines) {
     int i, len;
     char *p, line[MAXLINE];
 
-    p = ap + strlength(ap);
-    for (i = 0; (len = getline(line)) > 0; i++)
-    {
-        if (i >= lines || (strlength(p) + len) > MAXSIZE)
+    for (i = 0; (len = gline(line, MAXLINE)) > 0; i++) {
+        if (i >= maxlines || (p = alloc(len)) == NULL)
             return -1;
         line[len - 1] = '\0';
-        strcopy(p, line);
+        strcpy(p, line);
         array[i] = p;
-        p += len;
     }
     return i;
 }
 
-void printarray(char *a[], int len)
-{
+void printarray(char *a[], int len) {
     int i;
     for (i = 0; i < len; i++)
         printf("%s\n", a[i]);
