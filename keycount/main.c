@@ -4,7 +4,7 @@
 #define LIMIT   1000
 #define NKEYS   sizeof(keytab)/sizeof(keytab[0])
 
-static struct key keytab[] = {
+struct key keytab[] = {
     "_Alignas",         0,
     "_Alignof",         0,
     "_Atomic",          0,
@@ -50,16 +50,16 @@ static struct key keytab[] = {
 
 int main() {
     char word[LIMIT];
-    int idx;
+    struct key *p;
 
     while (getword(word, LIMIT) != EOF)
         if (isalpha(word[0]) && state == OUT)
-            if ((idx = binsearch(word, keytab, NKEYS)) >= 0)
-                keytab[idx].count++;            
+            if ((p = binsearch(word, keytab, NKEYS)) != NULL)
+                p->count++;            
 
-    for (idx = 0; NKEYS > idx; idx++)
-        if (keytab[idx].count > 0)
-            printf("%d %s\n", keytab[idx].count, keytab[idx].word);
+    for (p = keytab; keytab + NKEYS > p; p++)
+        if (p->count > 0)
+            printf("%d %s\n", p->count, p->word);
 
     return 0;
 }
