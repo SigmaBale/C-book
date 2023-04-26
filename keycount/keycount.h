@@ -3,5 +3,8 @@ struct key {
     unsigned int    count;
 };
 
+enum { OUT, STRCONST, HYPHEN, STAR, COMMENT, PREPROC };
+extern int state;
+
 int binsearch(char *, struct key *, int);
-char getword(char *, int);
+int getword(char *, int);
