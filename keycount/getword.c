@@ -20,9 +20,7 @@ void ungetch(int c) {
 }
 
 void restate(void) {
-    if (state == PREPROC)
-        state = OUT;
-    else if (state == HYPHEN)
+    if (state == HYPHEN)
         state = OUT;
     else if (state == STAR)
         state = COMMENT;
@@ -33,8 +31,12 @@ int getword(char *p, int size) {
     char *str = p;
 
     *str = '\0';
-    while (isspace(c = getch()))
-        restate();
+    while (isspace(c = getch())) {
+        if (state == PREPROC)
+            state = OUT;
+        else
+            restate();
+    }
     if (c != EOF)
         *str++ = c;
     if (!isalpha(c) && c != '_') {
