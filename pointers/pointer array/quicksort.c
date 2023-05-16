@@ -1,19 +1,20 @@
+#include "parray.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include "parray.h"
 
-static char *lowerstr(char *p) {
-    char *ptr = p;
-    while ((*ptr = tolower(*ptr))) ptr++;
+static char* lowerstr(char* p) {
+    char* ptr = p;
+    while((*ptr = tolower(*ptr)))
+        ptr++;
     return p;
 }
 
-static char *strfromp(char *start, char *end) {
-    char *ptr = start;
-    if (start == NULL)
+static char* strfromp(char* start, char* end) {
+    char* ptr = start;
+    if(start == NULL)
         return NULL;
-    if (end == NULL)
+    if(end == NULL)
         return start;
     while(ptr != end)
         ptr++;
@@ -21,62 +22,62 @@ static char *strfromp(char *start, char *end) {
     return start;
 }
 
-static void swap(void *a[], int src, int dst) {
-    void *temp;
-    temp = a[src];
+static void swap(void* a[], int src, int dst) {
+    void* temp;
+    temp   = a[src];
     a[src] = a[dst];
     a[dst] = temp;
 }
 
-static int partition(void *a[], int start, int end, flags *options) {
+static int partition(void* a[], int start, int end, flags* options) {
     int pivot, pivot_id, id;
     int comparison;
 
-    pivot = end;
+    pivot    = end;
     pivot_id = start;
 
-    for (id = pivot_id; id <= pivot - 1; id++) {
+    for(id = pivot_id; id < pivot; id++) {
         char idb[MAXLINE];
-        strcpy(idb, a[id]); 
+        strcpy(idb, a[id]);
         char pivotb[MAXLINE];
         strcpy(pivotb, a[pivot]);
 
-        char *idp = idb;
-        char *pivotp = pivotb;
-        char *idend;
-        char *pivotend;
-        int field;
-        int len = strlen(options->delim);
+        char* idp    = idb;
+        char* pivotp = pivotb;
+        char* idend;
+        char* pivotend;
+        int   field;
+        int   len = strlen(options->delim);
 
-        if ((field = options->field)) {
-            while (--field) {
-                idp = strstr(idp, options->delim);
+        if((field = options->field)) {
+            while(--field) {
+                idp    = strstr(idp, options->delim);
                 pivotp = strstr(pivotp, options->delim);
             }
 
-            if (idp == NULL || pivotp == NULL)
+            if(idp == NULL || pivotp == NULL)
                 continue;
 
-            idp += len;
-            pivotp += len; 
+            idp    += len;
+            pivotp += len;
 
-            idend = strstr(idp, options->delim);
+            idend    = strstr(idp, options->delim);
             pivotend = strstr(pivotp, options->delim);
 
-            idp = strfromp(idp, idend);
+            idp    = strfromp(idp, idend);
             pivotp = strfromp(pivotp, pivotend);
         }
 
-        if (options->fold) {
-            idp = lowerstr(idp);
-            pivotp = lowerstr(pivotp); 
+        if(options->fold) {
+            idp    = lowerstr(idp);
+            pivotp = lowerstr(pivotp);
         }
 
         comparison = (*options->cmp)(idp, pivotp);
 
-        if (comparison < 0 && !options->reverse)
+        if(comparison < 0 && !options->reverse)
             swap(a, id, pivot_id++);
-        if (comparison > 0 && options->reverse)
+        if(comparison > 0 && options->reverse)
             swap(a, id, pivot_id++);
     }
 
@@ -87,8 +88,8 @@ static int partition(void *a[], int start, int end, flags *options) {
     return pivot_id;
 }
 
-/* If fold flag is set, the order of the passed strings (pointers) inside the array might change
- * even if the strings when folded are equal, for example:
+/* If fold flag is set, the order of the passed strings (pointers) inside the
+ * array might change even if the strings when folded are equal, for example:
  *
  * ```
  * char *arr[] = { "first", "First" };
@@ -98,15 +99,16 @@ static int partition(void *a[], int start, int end, flags *options) {
  *         printf("Order changed");
  * ```
  *
- * This would output "Order changed", meaning it would swap the order of "first" and
- * "First" even though they are the same when fold flag is passed, the reason is behind quicksort
- * implementation (partition fn), rest assured that sorting will still work fine just the ordering
- * of passed in equivalent strings might not be the same as in the input.
+ * This would output "Order changed", meaning it would swap the order of "first"
+ * and "First" even though they are the same when fold flag is passed, the
+ * reason is behind quicksort implementation (partition fn), rest assured that
+ * sorting will still work fine just the ordering of passed in equivalent
+ * strings might not be the same as in the input.
  * */
-void quicksort(void *a[], int start, int end, flags *options) {
+void quicksort(void* a[], int start, int end, flags* options) {
     int pivot;
 
-    if (start < end) {
+    if(start < end) {
         pivot = partition(a, start, end, options);
         quicksort(a, start, pivot - 1, options);
         quicksort(a, pivot + 1, end, options);
