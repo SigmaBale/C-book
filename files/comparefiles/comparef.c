@@ -51,7 +51,6 @@ main(int argc, char* argv[])
 unsigned int
 getlinel(char* buff, unsigned int len, FILE* stream)
 {
-    char* s = buff;
     if((fgets(buff, len, stream) == NULL))
         return 0;
     else
