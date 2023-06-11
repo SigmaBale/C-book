@@ -4,7 +4,18 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#define PRINT_SIZE(size, name) fprintf(stdout, "%8ld %s\n", (size), name)
+#define PRINT_INFO(stat, name)                       \
+    fprintf(stdout,                                  \
+            "%ld %ld %ul %ld %ld s %ld s %ld s %8ld %s\n", \
+            stat.st_ino,                             \
+            stat.st_nlink,                           \
+            stat.st_uid,                             \
+            stat.st_blksize,                         \
+            stat.st_atime / 1000000,                 \
+            stat.st_mtime / 1000000,                 \
+            stat.st_ctime / 1000000,                 \
+            stat.st_size,                            \
+            name)
 
 void fsize(char* name);
 void dirwalk(char* dir, void (*fn)(char*));
@@ -35,7 +46,7 @@ fsize(char* name)
     }
 
     if((mask = (statbuf.st_mode & S_IFMT)) == S_IFREG || mask == S_IFLNK) {
-        PRINT_SIZE(statbuf.st_size, name);
+        PRINT_INFO(statbuf, name);
     } else if(mask == S_IFDIR) {
         dirwalk(name, fsize);
     }

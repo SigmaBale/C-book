@@ -1,7 +1,7 @@
 ### C ###
 # Ignore editor undo history or anything with linux config files
 ~
-nvim_undo
+.vim_undo
 # build dir
 build
 # Prerequisites
