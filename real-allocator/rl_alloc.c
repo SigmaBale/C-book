@@ -1,9 +1,24 @@
 #include "rl_alloc.h"
+#include <elf.h>
+#include <memory.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-/// Internal function for expanding the process data segment.
+/// Internal function for expanding the data segment of a process.
 static sk_chunkptr _sk_morecore(size_t chunks);
+
+/// Internal function for checking if the 'ptr' is within
+/// heap bounds (heap_low <= 'ptr' <= heap_high).
+static bool _sk_is_valid_ptr(void* ptr);
+
+/// Both of these 'heap_low' and 'heap_high' is valid
+/// memory area that can be passed to 'sk_free'.
+/// Tracks the starting address of the heap.
+static void* heap_low = NULL;
+/// Tracks the top of the heap.
+static void* heap_high = NULL;
 
 /// Allocator chunk that acts as header by storing
 /// the allocation size and as alignment for allocated memory.
@@ -21,15 +36,19 @@ struct sk_chunk {
 /// Initialize the singly-linked list by initializing
 /// the first chunk.
 static sk_chunk    first_chunk = { .next = &first_chunk, .size = 0 };
-/// Initialize the globalptr, it points to the last
-/// allocated chunk.
+/// Serves as the 'head' of the list
 static sk_chunkptr globalptr = NULL;
 
 /// Allocates 'BYTES' bytes on the heap returning the
 /// pointer to the start of the allocation.
 void*
-sk_alloc_mem(size_t bytes)
+sk_alloc(size_t bytes)
 {
+    /// Just return NULL...
+    if(bytes == 0) {
+        return NULL;
+    }
+
     sk_chunkptr current = NULL;
     sk_chunkptr prev    = globalptr;
 
@@ -44,14 +63,15 @@ sk_alloc_mem(size_t bytes)
         globalptr = &first_chunk;
         current   = &first_chunk;
         prev      = &first_chunk;
+        /// Initialize our heap bounds
+        heap_low  = sbrk(0);
+        heap_high = heap_low;
     }
-
-    bool allocating = true;
 
     current = prev->next;
     /// Let's traverse the singly linked list in order to
     /// find the chunk with fitting size.
-    while(allocating) {
+    while(1) {
         /// If we found the big enough chunk lets fix the
         /// free list so the previous chunk (globalptr) and
         /// current chunk size are valid
@@ -77,7 +97,7 @@ sk_alloc_mem(size_t bytes)
             /// just before the returned chunk.
             globalptr = prev;
             /// Lets exit the loop, we are done allocating
-            allocating = false;
+            break;
         }
 
         /// If we traversed all the list chunks and wrapped around but still
@@ -111,13 +131,9 @@ sk_alloc_mem(size_t bytes)
 /// Internal function for raising 'program break' aka
 /// expanding the heap memory, returns the pointer to the allocation
 /// or NULL if chunks is zero and/or heap can't be expanded.
-sk_chunkptr
+static sk_chunkptr
 _sk_morecore(size_t chunks)
 {
-    if(chunks == 0) {
-        return NULL;
-    }
-
     /// Make sure we are allocating at least
     /// minimal amount of chunks specified
     /// for performance sake
@@ -132,6 +148,9 @@ _sk_morecore(size_t chunks)
     if((new_chunks = sbrk(chunks * sizeof(sk_chunk))) == (void*) -1) {
         return NULL;
     }
+
+    /// Update the address of the current top of the heap tracker
+    heap_high = sbrk(0);
 
     /// Get the first chunk (header) from the new_chunks
     /// and set its size to the amount of 'chunks'.
@@ -150,9 +169,27 @@ _sk_morecore(size_t chunks)
     return globalptr;
 }
 
+/// Checks if the 'ptr' is valid in order to be freed.
+/// 'ptr' must be non null and in bound of the current heap.
+static bool
+_is_valid_ptr(void* ptr)
+{
+    return (ptr == NULL || ptr < heap_low || ptr > heap_high) ? false : true;
+}
+
+/// This will free the 'allocation' returning the chunk and the allocation
+/// to the free-list.
 void
 sk_free(void* allocation)
 {
+    /// If 'allocation' is invalid print err msg to stdout
+    /// and return, this will get only invoked by users
+    /// fault, internal allocation of free blocks will always pass.
+    if(!_is_valid_ptr(allocation)) {
+        fprintf(stderr, "Error: trying to free invalid/non-allocated memory\n");
+        return;
+    }
+
     /// Get the header chunk that is one chunk (at least 'word' size)
     /// behind the start of the allocation
     sk_chunk* chunkp = (sk_chunk*) allocation - 1;
@@ -206,4 +243,20 @@ sk_free(void* allocation)
     /// multiple chunks together, and this might immediatly satisfy
     /// the next 'sk_alloc_mem' call.
     globalptr = current;
+}
+
+/// Wrapper around 'sk_alloc' same stuff as calloc,
+/// returns the n*size allocation and mem-sets it to 0.
+void*
+sk_calloc(size_t n, size_t size)
+{
+    void* allocation = NULL;
+
+    if((allocation = sk_alloc(n * size)) == NULL) {
+        return NULL;
+    }
+
+    memset(allocation, 0, n);
+
+    return allocation;
 }
