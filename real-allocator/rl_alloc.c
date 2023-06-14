@@ -211,9 +211,9 @@ sk_free(void* allocation)
         }
     }
 
-    /// If this is not the first edge case where the current chunk
-    /// was at the end of the list, then combine the freed chunk
-    /// and the 'next' chunk together.
+    /// Chunk was either at the end of the list or the current
+    /// was the only chunk in the list and freed chunk goes behind it.
+    /// Combine them together.
     if(chunkp + chunkp->size == current->next) {
         chunkp->size += current->next->size;
         chunkp->next = current->next->next;
@@ -225,14 +225,14 @@ sk_free(void* allocation)
     }
 
     /// If the freed chunk memory address comes right after the
-    /// current chunk then combine them together.
+    /// current chunk combine them together.
     if(current + current->size == chunkp) {
         current->size += chunkp->size;
         current->next = chunkp->next;
     } else {
-        /// Current chunk is at the end of the free-list
-        /// therefore the freed chunk was inserted at the
-        /// start of the free-list, we can't combine them
+        /// Current chunk is at the end of the free-list and free-list
+        /// contained more than 1 chunk, therefore the freed chunk was
+        /// inserted at the start of the free-list, we can't combine them
         current->next = chunkp;
     }
 
